@@ -27,13 +27,11 @@ namespace dojoApplicationTest.dojo
             NodesDataPacket[0] = dojoConnection.UDP_NODE_DATA;
 
             CheckTables = new Thread(CheckSensors);
+            CheckTables.IsBackground = true;
             CheckTables.Start();
 
             Connection = new dojoConnection(serverIPAddr, ActTable);
-        }
-        ~dojoClient() { 
-            CheckTables.Abort();
-        }
+        }        
 
         //save sensor in local table and inform server about its presence
         public void RegSensor(dojoCoords node, double thres)

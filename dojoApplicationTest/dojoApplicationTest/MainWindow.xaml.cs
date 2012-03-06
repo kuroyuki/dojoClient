@@ -41,6 +41,7 @@ namespace dojoApplicationTest
 
 
             UpdateProcess = new Thread(UpdateValues);
+            UpdateProcess.IsBackground = true;
             UpdateProcess.Start();
 
             Sensor1 = new dojoCoords(0, 0);
@@ -71,7 +72,7 @@ namespace dojoApplicationTest
         private void UpdateValues()
         {
             //waiting for shutdown of Dispatcher 
-            while (this.Dispatcher.HasShutdownStarted == false)
+            while (true)
             {
                 Thread.Sleep(10);
                 // Get the dispatcher from the current window, and use it to invoke

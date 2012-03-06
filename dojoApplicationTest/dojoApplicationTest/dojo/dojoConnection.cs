@@ -15,8 +15,7 @@ namespace dojoApplicationTest.dojo
         public const int UDP_NODE_DATA = 0, UDP_ACT_REG = 1, UDP_SENSOR_REG = 2;
 
         //internal 
-        UdpClient UDP_Sender;
-        UdpClient UDP_Receiver;
+        UdpClient UDP_Client;
 
         IPEndPoint LocalEndPoint;
 
@@ -29,18 +28,15 @@ namespace dojoApplicationTest.dojo
 
         public dojoConnection(IPAddress remoteIP, Dictionary<dojoCoords, dojoData> actTable)
         {
+            LocalEndPoint = new IPEndPoint(remoteIP, UDP_SERVER_PORT);
             //Initiate remote connection to server
-            UDP_Sender = new UdpClient();
-            UDP_Sender.Connect(remoteIP, UDP_SERVER_PORT);
+            UDP_Client = new UdpClient();
+            UDP_Client.Connect(LocalEndPoint);
 
             FifoForSend = new Queue<byte[]>();
 
-            //Enable local connection from server to local any avalaible port
-            LocalEndPoint = new IPEndPoint(remoteIP, 0);
-            UDP_Receiver = UDP_Sender;
-
             //Start receive loop
-            UDP_Receiver.BeginReceive(new AsyncCallback(ReceiveLoop), null);
+            UDP_Client.BeginReceive(new AsyncCallback(ReceiveLoop), null);
 
             ActTable = actTable;
             
@@ -53,13 +49,13 @@ namespace dojoApplicationTest.dojo
             {
                 SenderBusy = true;
                 byte[] send = FifoForSend.Dequeue();
-                UDP_Sender.BeginSend(send, send.Length, new AsyncCallback(SendLoop), null);
+                UDP_Client.BeginSend(send, send.Length, new AsyncCallback(SendLoop), null);
             }
         }
         void ReceiveLoop(IAsyncResult ar)
         {
             //Packet from remote host received
-            Byte[] receiveBytes = UDP_Receiver.EndReceive(ar, ref LocalEndPoint);
+            Byte[] receiveBytes = UDP_Client.EndReceive(ar, ref LocalEndPoint);
 
             /*             Received packets parsing            */
             //node data packet
@@ -90,20 +86,20 @@ namespace dojoApplicationTest.dojo
             }
 
             //Start receive next one
-            UDP_Receiver.BeginReceive(new AsyncCallback(ReceiveLoop), null);
+            UDP_Client.BeginReceive(new AsyncCallback(ReceiveLoop), null);
         }
         void SendLoop(IAsyncResult ar)
         {
             SenderBusy = false;
             //packet was send
-            UDP_Sender.EndSend(ar);
+            UDP_Client.EndSend(ar);
           
             //check for next packet in FIFO
             if (FifoForSend.Count > 0)
             {
                 SenderBusy = true;
                 byte[] send = FifoForSend.Dequeue();
-                UDP_Sender.BeginSend(send, send.Length, new AsyncCallback(SendLoop), null);
+                UDP_Client.BeginSend(send, send.Length, new AsyncCallback(SendLoop), null);
             }
         }
     }
